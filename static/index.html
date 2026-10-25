@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>填报分析助手 · 数据配置</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231a6857'/%3E%3Cpath d='M8 23V16h4v7m2 0V9h4v14m2 0V13h4v10' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">▥</span>填报分析助手</div>
+    <div class="top-meta"><span id="environment" class="badge">正在连接</span><a href="/docs" target="_blank" rel="noopener">API 文档 ↗</a></div>
+  </header>
+  <main>
+    <div class="page-heading"><h1>配置分析数据</h1><p>选择任务、配置关联，生成可供分析的宽表表头。</p></div>
+    <div class="workspace">
+      <aside class="task-pane" aria-labelledby="task-title">
+        <div class="pane-heading"><h2 id="task-title">填报任务 <span id="task-total" class="count">—</span></h2><button id="clear" class="text-button" type="button" disabled>清空选择</button></div>
+        <form id="search-form" class="search-row" role="search">
+          <input id="search" type="search" aria-label="按任务名称搜索" placeholder="搜索任务名称" maxlength="200" autocomplete="off">
+          <button class="button secondary" type="submit">搜索</button>
+        </form>
+        <div class="task-tabs" aria-label="任务显示范围"><button id="all-filter" class="task-tab active" type="button" aria-pressed="true">全部任务</button><button id="selected-filter" class="task-tab" type="button" aria-pressed="false">已选 <span id="selected-count">0</span></button></div>
+        <div class="list-toolbar"><label><input id="select-all" type="checkbox" disabled> 选择当前结果</label><span id="result-count" aria-live="polite">加载中…</span></div>
+        <div id="load-error" class="error" role="alert" hidden><span id="error-text"></span><button id="retry" type="button" class="text-button">重试</button></div>
+        <div class="task-scroll">
+          <div id="tasks" class="task-list"></div>
+          <div id="empty" class="empty" hidden><strong>没有找到相关任务</strong><p>试试其他名称，或查看全部任务。</p><button id="reset-search" class="text-button" type="button">清空搜索</button></div>
+          <p id="loading" class="empty">正在读取任务…</p>
+        </div>
+        <p class="task-hint">仅展示已结束任务。取消勾选会移除相关关联组。</p>
+      </aside>
+      <section id="relations-section" class="relation-pane" aria-label="关联配置与宽表表头">
+        <div class="pane-heading"><div class="config-tabs" role="tablist" aria-label="配置视图"><button id="relations-tab" class="config-tab active" role="tab" aria-selected="true" aria-controls="relations-view" type="button">任务关联 <span id="pair-count" class="count">0 组</span></button><button id="schema-tab" class="config-tab" role="tab" aria-selected="false" aria-controls="schema-view" tabindex="-1" type="button" disabled>宽表表头 <span id="schema-count" class="count" hidden></span></button><button id="analysis-tab" class="config-tab" role="tab" aria-selected="false" aria-controls="analysis-view" tabindex="-1" type="button" disabled>智能分析</button></div><span id="fields-status" class="muted" role="status">尚未选择任务</span><button id="retry-fields" class="text-button" type="button" hidden>重试读取字段</button></div>
+        <div class="relation-scroll">
+          <div id="relations-view" role="tabpanel" aria-labelledby="relations-tab">
+          <div id="relations-start" class="start-empty"><span aria-hidden="true">⇄</span><h3>从左侧选择任务开始</h3><p>选择后自动加载字段，在这里指定任务之间如何对齐。</p></div>
+          <p id="fields-notice" class="notice" hidden></p>
+          <fieldset id="relation-editor" disabled hidden>
+            <p id="single-task" class="notice" hidden>已选择一个任务，无需配置关联。</p>
+            <fieldset id="pair-picker">
+              <form id="pair-form" class="pair-picker">
+                <label>左侧任务<select id="pair-left" aria-label="新增关联的左侧任务" required><option value="">请选择任务</option></select></label>
+                <label>连接方式<select id="pair-type" aria-label="新增关联的连接方式"><option value="INNER">INNER JOIN</option><option value="LEFT">LEFT JOIN</option></select></label>
+                <label>右侧任务<select id="pair-right" aria-label="新增关联的右侧任务" required><option value="">请选择任务</option></select></label>
+                <button class="button secondary" type="submit">＋ 添加关联</button>
+              </form>
+            </fieldset>
+            <p id="pair-error" class="error" role="alert" hidden></p>
+            <div id="pairs"></div>
+            <p id="pairs-empty" class="relation-empty">暂无关联。选择两个任务，添加一组字段条件。</p>
+            <p class="rule-note">同组条件全部满足；字段值按字符串完全相等匹配。LEFT JOIN 保留左侧任务。</p>
+          </fieldset>
+          <details id="relation-payload-details" class="payload" hidden><summary>查看配置 JSON</summary><pre id="relation-payload"></pre></details>
+          </div>
+          <div id="schema-view" role="tabpanel" aria-labelledby="schema-tab" hidden>
+            <p id="schema-summary" class="schema-summary" role="status"></p>
+            <p id="schema-warning" class="notice" hidden></p>
+            <div id="schema-table-wrap" class="schema-table-wrap"><table class="schema-table"><thead><tr><th scope="col">字段 / 列标识</th><th scope="col">类型</th><th scope="col">所属任务</th><th scope="col">关联键</th></tr></thead><tbody id="schema-rows"></tbody></table></div>
+            <p id="schema-empty" class="empty" hidden>所选任务暂无可用历史字段，表头为空。</p>
+            <details class="payload"><summary>查看表头 JSON</summary><pre id="schema-json"></pre></details>
+          </div>
+          <div id="analysis-view" role="tabpanel" aria-labelledby="analysis-tab" hidden>
+            <label class="prompt-label" for="analysis-prompt">你想分析什么？</label>
+            <textarea id="analysis-prompt" rows="4" maxlength="3000" placeholder="例如：按项目名称汇总项目总成本，使用柱状图。"></textarea>
+            <p class="rule-note">模型依据当前表头和已配置关系生成 SQL，不接收填报值。</p>
+            <p id="analysis-status" class="analysis-status" role="status"></p>
+            <p id="analysis-error" class="error" role="alert" hidden></p>
+            <div id="analysis-result" hidden>
+              <div class="analysis-result-heading"><h3 id="analysis-title"></h3><span id="analysis-model" class="muted"></span></div>
+              <p id="analysis-message" class="analysis-message"></p>
+              <div id="analysis-sql-result" hidden>
+                <p id="analysis-chart-summary" class="rule-note"></p>
+                <pre id="analysis-sql" class="sql-preview"></pre>
+                <p class="notice">SQL 已生成并通过结构校验，尚未执行数据查询。</p>
+                <details class="payload"><summary>查看字段映射</summary><pre id="analysis-sources"></pre></details>
+                <details class="payload"><summary>查看完整只读 SQL</summary><pre id="analysis-prepared-sql"></pre></details>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="relation-footer"><div><p id="config-summary">未选择任务</p><p id="relation-confirmation" class="confirmation" role="status" hidden></p></div><button id="confirm-relations" class="button primary" type="button" disabled>生成宽表表头</button></div>
+      </section>
+    </div>
+    <p class="page-footnote">数据只读 · 当前配置保存在本次页面中</p>
+  </main>
+  <template id="pair-template">
+    <article class="pair-card">
+      <div class="pair-heading"><h3 class="pair-title"></h3><div class="pair-tools"><select class="join-type"><option value="INNER">INNER JOIN</option><option value="LEFT">LEFT JOIN</option></select><button class="text-button delete-pair" type="button">删除整组</button></div></div>
+      <div class="pair-summary"><div><small>左侧任务</small><strong class="left-name"></strong></div><button class="text-button swap-pair" type="button">⇄ 交换</button><div><small>右侧任务</small><strong class="right-name"></strong></div></div>
+      <p class="join-note"></p><div class="field-links"></div><button class="text-button add-link" type="button">＋ 添加条件（AND）</button>
+    </article>
+  </template>
+  <template id="link-template"><div class="field-link"><span class="condition-number"></span><select class="left-field"></select><span class="equals">=</span><select class="right-field"></select><button class="text-button delete-link" type="button" title="删除条件">×</button></div></template>
+</body>
+</html>
