@@ -2,6 +2,9 @@
 
 保存日期：2026-10-25。计划于 2026-10-26 继续。
 
+指定 GitHub 仓库：https://github.com/IIJohnWeyII/Report_Assistant
+默认开发分支：main。新机器先 git clone 该仓库，再按下文重建环境。
+
 ## 从这里恢复
 
 先阅读本文件，再阅读 README.md 和 docs/acceptance-04.md。
